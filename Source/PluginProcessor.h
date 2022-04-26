@@ -89,7 +89,14 @@ private:
     void updatePeakFilter(const ChainSettings& chainSettings);
     using Coefficients = Filter::CoefficientsPtr;
     static void updateCoeffs(Coefficients& old, const Coefficients& replacement);
-     
+    
+    template<int Index, typename ChainType, typename CoefficientType>
+    void update(ChainType& chain, const CoefficientType& cutCoeffs)
+    {
+        updateCoeffs(chain.template get<Index>().coefficients, cutCoeffs[Index]);
+        chain.template setBypassed<Index>(false);
+    }
+
     template<typename ChainType, typename CoefficientType>
     void updateCutFilter(ChainType& leftLowCut,
         const CoefficientType& cutCoeffs,
@@ -99,9 +106,25 @@ private:
         leftLowCut.template setBypassed<1>(true);
         leftLowCut.template setBypassed<2>(true);
         leftLowCut.template setBypassed<3>(true);
-        switch(lowCutSlope)
+        switch (lowCutSlope)
         {
+        case Slope_48:
+        {
+            update<3>(leftLowCut, cutCoeffs);
+        }
+        case Slope_36:
+        {
+            update<2>(leftLowCut, cutCoeffs);
+        }
+        case Slope_24:
+        {
+            update<1>(leftLowCut, cutCoeffs);
+        }
         case Slope_12:
+        {
+            update<0>(leftLowCut, cutCoeffs);
+        }
+        /*case Slope_12:
             *leftLowCut.template get<0>().coefficients = *cutCoeffs[0];
             leftLowCut.template setBypassed<0>(false);
             break;
@@ -128,9 +151,9 @@ private:
             leftLowCut.template setBypassed<2>(false);
             *leftLowCut.template get<3>().coefficients = *cutCoeffs[3];
             leftLowCut.template setBypassed<3>(false);
-            break;
+            break;*/
         };
-    }
+    };
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MyEQAudioProcessor)
 };
