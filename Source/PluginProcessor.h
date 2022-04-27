@@ -9,6 +9,20 @@
 #pragma once
 
 #include <JuceHeader.h>
+enum Slope {
+    Slope_12,
+    Slope_24,
+    Slope_36,
+    Slope_48
+};
+struct EqSettings {
+    float lowCutFreq{ 0 }, highCutFreq{ 0 }, peakFreq{ 0 };
+    float peakGain{ 0 }, peakQ{ 1.f };
+    int lowCutSlope{ 0 }, highCutSlope{ 0 };
+};
+
+EqSettings getEqSettings(juce::AudioProcessorValueTreeState& parameters);
+
 //==============================================================================
 /**
 */
@@ -62,5 +76,11 @@ private:
     using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
     using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
     MonoChain leftChain, rightChain;
+
+    enum eqTypes {
+        LowCut,
+        Peak,
+        HighCut
+    };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MyEQAudioProcessor)
 };

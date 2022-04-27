@@ -8,7 +8,6 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-
 //==============================================================================
 MyEQAudioProcessor::MyEQAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -99,6 +98,18 @@ void MyEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = 1;
     spec.sampleRate = sampleRate;
+
+    leftChain.prepare(spec);
+    rightChain.prepare(spec);
+
+    auto eqSettings = getEqSettings(parameters);
+    auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, 
+        eqSettings.peakFreq,
+        eqSettings.peakQ,
+        juce::Decibels::decibelsToGain(eqSettings.peakGain));
+
+    *leftChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
+    *rightChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
 } 
 
 void MyEQAudioProcessor::releaseResources()
@@ -142,7 +153,16 @@ void MyEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    
+    auto eqSettings = getEqSettings(parameters);
+
+    auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(),
+        eqSettings.peakFreq,
+        eqSettings.peakQ,
+        juce::Decibels::decibelsToGain(eqSettings.peakGain));
+
+    *leftChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
+    *rightChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
+
     juce::dsp::AudioBlock<float> block(buffer);
    
     auto leftBlock = block.getSingleChannelBlock(0);
@@ -228,3 +248,15 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new MyEQAudioProcessor();
 }
 
+EqSettings getEqSettings(juce::AudioProcessorValueTreeState& parameters)
+{
+    EqSettings eqSettings;
+    eqSettings.lowCutFreq = parameters.getRawParameterValue("LowCut Freq")->load();
+    eqSettings.highCutFreq = parameters.getRawParameterValue("HighCut Freq")->load();
+    eqSettings.peakFreq = parameters.getRawParameterValue("Peak Freq")->load();
+    eqSettings.peakGain = parameters.getRawParameterValue("Peak Gain")->load();
+    eqSettings.peakQ = parameters.getRawParameterValue("Peak Q")->load();
+    eqSettings.lowCutSlope = parameters.getRawParameterValue("LowCut Slope")->load();
+    eqSettings.highCutSlope = parameters.getRawParameterValue("HighCut Slope")->load();
+    return eqSettings;
+}
