@@ -84,7 +84,12 @@ private:
 		Peak,
 		HighCut
 	};
-
+	void updatePeakFilter(EqSettings& settings);
+	template<typename Oldcoeff, typename Newcoeff>
+	void updateCoeffs(Oldcoeff& oldcoeff, Newcoeff& newcoeff)
+	{
+		oldcoeff = newcoeff;
+	}
 	template<typename EqType, typename CoeffType>
 	void updateCutFilters(EqType& cutFilter,
 						  CoeffType& cutCoeffs,

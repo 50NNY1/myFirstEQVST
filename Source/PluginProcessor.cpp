@@ -104,14 +104,7 @@ void MyEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 	auto eqSettings = getEqSettings(parameters);
 
 	//prepare peak filter
-	auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::
-		makePeakFilter(sampleRate,
-					   eqSettings.peakFreq,
-					   eqSettings.peakQ,
-					   juce::Decibels::decibelsToGain(eqSettings.peakGain));
-
-	*leftChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
-	*rightChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
+	updatePeakFilter(eqSettings);
 
 	//prepare lowcut filter
 	auto lowCutCoeffs =
@@ -198,7 +191,7 @@ bool MyEQAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) cons
 		return false;
 #endif
 
-	return true;
+		return true;
 #endif
 }
 #endif
@@ -215,12 +208,7 @@ void MyEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
 	auto eqSettings = getEqSettings(parameters);
 
 	//process peak filter
-	auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(),
-																		  eqSettings.peakFreq,
-																		  eqSettings.peakQ,
-																		  juce::Decibels::decibelsToGain(eqSettings.peakGain));
-	*leftChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
-	*rightChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
+	updatePeakFilter(eqSettings);
 
 	//process lowcut filter
 	auto lowCutCoeffs =
@@ -303,7 +291,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout MyEQAudioProcessor::createPa
 														   20000.f));
 	layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Freq",
 														   "Peak Freq",
-														   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f),
+														   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
 														   750.f));
 	layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain",
 														   "Peak Gain",
@@ -332,6 +320,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout MyEQAudioProcessor::createPa
 															0));
 
 	return layout;
+}
+void MyEQAudioProcessor::updatePeakFilter(EqSettings& settings)
+{
+	auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::
+		makePeakFilter(getSampleRate(),
+					   settings.peakFreq,
+					   settings.peakQ,
+					   juce::Decibels::decibelsToGain(settings.peakGain));
+
+
+	updateCoeffs(*leftChain.get<eqTypes::Peak>().coefficients, *peakCoeffs);
+	updateCoeffs(*rightChain.get<eqTypes::Peak>().coefficients, *peakCoeffs);
 }
 //==============================================================================
 // This creates new instances of the plugin..
