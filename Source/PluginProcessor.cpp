@@ -191,7 +191,7 @@ bool MyEQAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) cons
 		return false;
 #endif
 
-		return true;
+	return true;
 #endif
 }
 #endif
@@ -323,13 +323,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout MyEQAudioProcessor::createPa
 }
 void MyEQAudioProcessor::updatePeakFilter(EqSettings& settings)
 {
-	auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::
-		makePeakFilter(getSampleRate(),
-					   settings.peakFreq,
-					   settings.peakQ,
-					   juce::Decibels::decibelsToGain(settings.peakGain));
-
-
+	auto peakCoeffs = makePeakFilter(settings, getSampleRate());
 	updateCoeffs(*leftChain.get<eqTypes::Peak>().coefficients, *peakCoeffs);
 	updateCoeffs(*rightChain.get<eqTypes::Peak>().coefficients, *peakCoeffs);
 }
@@ -338,6 +332,15 @@ void MyEQAudioProcessor::updatePeakFilter(EqSettings& settings)
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
 	return new MyEQAudioProcessor();
+}
+
+Coefficients makePeakFilter(const EqSettings& eqSettings, double sampleRate)
+{
+	return juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+		sampleRate,
+		eqSettings.peakFreq,
+		eqSettings.peakQ,
+		juce::Decibels::decibelsToGain(eqSettings.peakGain));;
 }
 
 EqSettings getEqSettings(juce::AudioProcessorValueTreeState& parameters)

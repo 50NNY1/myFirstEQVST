@@ -22,6 +22,23 @@ struct EqSettings
 	float peakGain{ 0 }, peakQ{ 1.f };
 	Slope lowCutSlope{ Slope::Slope_12 }, highCutSlope{ Slope::Slope_12 };
 };
+using Filter = juce::dsp::IIR::Filter<float>;
+using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+enum eqTypes
+{
+	LowCut,
+	Peak,
+	HighCut
+};
+
+template<typename Oldcoeff, typename Newcoeff>
+void updateCoeffs(Oldcoeff& oldcoeff, Newcoeff& newcoeff)
+{
+	oldcoeff = newcoeff;
+}
+using Coefficients = Filter::CoefficientsPtr;
+Coefficients makePeakFilter(const EqSettings& eqSettings, double samplerate);
 
 EqSettings getEqSettings(juce::AudioProcessorValueTreeState& parameters);
 
@@ -74,22 +91,9 @@ public:
 
 private:
 	//==============================================================================
-	using Filter = juce::dsp::IIR::Filter<float>;
-	using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-	using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
 	MonoChain leftChain, rightChain;
-	enum eqTypes
-	{
-		LowCut,
-		Peak,
-		HighCut
-	};
 	void updatePeakFilter(EqSettings& settings);
-	template<typename Oldcoeff, typename Newcoeff>
-	void updateCoeffs(Oldcoeff& oldcoeff, Newcoeff& newcoeff)
-	{
-		oldcoeff = newcoeff;
-	}
+
 	template<typename EqType, typename CoeffType>
 	void updateCutFilters(EqType& cutFilter,
 						  CoeffType& cutCoeffs,
