@@ -40,6 +40,34 @@ void updateCoeffs(Oldcoeff& oldcoeff, Newcoeff& newcoeff)
 using Coefficients = Filter::CoefficientsPtr;
 Coefficients makePeakFilter(const EqSettings& eqSettings, double samplerate);
 
+inline auto makeLowCutFilter(const EqSettings& eqSettings, double samplerate);
+inline auto makeHighCutFilter(const EqSettings& eqSettings, double samplerate);
+template<typename EqType, typename CoeffType>
+void updateCutFilters(EqType& cutFilter,
+					  CoeffType& cutCoeffs,
+					  Slope& slope)
+{
+	cutFilter.template setBypassed<0>(true);
+	cutFilter.template setBypassed<1>(true);
+	cutFilter.template setBypassed<2>(true);
+	cutFilter.template setBypassed<3>(true);
+	switch (slope)
+	{
+	case Slope_48:
+		*cutFilter.template get<3>().coefficients = *cutCoeffs[3];
+		cutFilter.template setBypassed<3>(false);
+	case Slope_36:
+		*cutFilter.template get<2>().coefficients = *cutCoeffs[2];
+		cutFilter.template setBypassed<2>(false);
+	case Slope_24:
+		*cutFilter.template get<1>().coefficients = *cutCoeffs[1];
+		cutFilter.template setBypassed<1>(false);
+	case Slope_12:
+		*cutFilter.template get<0>().coefficients = *cutCoeffs[0];
+		cutFilter.template setBypassed<0>(false);
+	}
+}
+
 EqSettings getEqSettings(juce::AudioProcessorValueTreeState& parameters);
 
 //==============================================================================
@@ -93,31 +121,7 @@ private:
 	//==============================================================================
 	MonoChain leftChain, rightChain;
 	void updatePeakFilter(EqSettings& settings);
-
-	template<typename EqType, typename CoeffType>
-	void updateCutFilters(EqType& cutFilter,
-						  CoeffType& cutCoeffs,
-						  Slope& slope)
-	{
-		cutFilter.template setBypassed<0>(true);
-		cutFilter.template setBypassed<1>(true);
-		cutFilter.template setBypassed<2>(true);
-		cutFilter.template setBypassed<3>(true);
-		switch (slope)
-		{
-		case Slope_48:
-			*cutFilter.template get<3>().coefficients = *cutCoeffs[3];
-			cutFilter.template setBypassed<3>(false);
-		case Slope_36:
-			*cutFilter.template get<2>().coefficients = *cutCoeffs[2];
-			cutFilter.template setBypassed<2>(false);
-		case Slope_24:
-			*cutFilter.template get<1>().coefficients = *cutCoeffs[1];
-			cutFilter.template setBypassed<1>(false);
-		case Slope_12:
-			*cutFilter.template get<0>().coefficients = *cutCoeffs[0];
-			cutFilter.template setBypassed<0>(false);
-		}
-	}
+	void updateLowCutFilter(EqSettings& settings);
+	void updateHighCutFilter(EqSettings& settings);
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MyEQAudioProcessor)
 };

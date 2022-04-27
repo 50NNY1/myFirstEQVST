@@ -29,11 +29,21 @@ MyEQAudioProcessorEditor::MyEQAudioProcessorEditor(MyEQAudioProcessor& p)
 	addAndMakeVisible(highCutFreqSlider);
 	addAndMakeVisible(lowCutSlopeSlider);
 	addAndMakeVisible(highCutSlopeSlider);
+
+	const auto& params = audioProcessor.getParameters();
+	for (auto param : params)
+		param->addListener(this);
+
+	startTimerHz(60);
+
 	setSize(800, 600);
 }
 
 MyEQAudioProcessorEditor::~MyEQAudioProcessorEditor()
 {
+	const auto& params = audioProcessor.getParameters();
+	for (auto param : params)
+		param->removeListener(this);
 }
 
 //==============================================================================
@@ -122,6 +132,9 @@ void MyEQAudioProcessorEditor::timerCallback()
 {
 	if (paramsChanged.compareAndSetBool(false, true))
 	{
-
+		auto eqSettings = getEqSettings(audioProcessor.parameters);
+		auto peakCoeffs = makePeakFilter(eqSettings, audioProcessor.getSampleRate());
+		updateCoeffs(monoChain.get<eqTypes::Peak>().coefficients, peakCoeffs);
+		repaint();
 	}
 }
