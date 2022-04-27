@@ -125,7 +125,29 @@ private:
             update<0>(chain, coeffs);
         }
         };
-    };
+    }
+    void updateLowCutFilter(const ChainSettings& chainSettings) {
+        auto lowCutCoeffs = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(
+            chainSettings.lowCutFreq,
+            getSampleRate(),
+            2 * (chainSettings.lowCutSlope + 1));
+
+        auto& leftLowCut = leftChain.get<ChainPositions::LowCut>();
+        updateCutFilter(leftLowCut, lowCutCoeffs, chainSettings.lowCutSlope);
+        auto& rightLowCut = rightChain.get<ChainPositions::LowCut>();
+        updateCutFilter(rightLowCut, lowCutCoeffs, chainSettings.lowCutSlope);
+    }
+    void updateHighCutFilter(const ChainSettings& chainSettings) {
+        auto highCutCoeffs = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(
+            chainSettings.highCutFreq,
+            getSampleRate(),
+            2 * (chainSettings.highCutSlope + 1));
+
+        auto& leftHighCut = leftChain.get<ChainPositions::HighCut>();
+        updateCutFilter(leftHighCut, highCutCoeffs, chainSettings.highCutSlope);
+        auto& rightHighCut = rightChain.get<ChainPositions::HighCut>();
+        updateCutFilter(rightHighCut, highCutCoeffs, chainSettings.highCutSlope);
+    }
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MyEQAudioProcessor)
 };
