@@ -18,7 +18,7 @@ enum Slope {
 struct EqSettings {
     float lowCutFreq{ 0 }, highCutFreq{ 0 }, peakFreq{ 0 };
     float peakGain{ 0 }, peakQ{ 1.f };
-    int lowCutSlope{ 0 }, highCutSlope{ 0 };
+    Slope lowCutSlope{ Slope::Slope_12 }, highCutSlope{ Slope::Slope_12 };
 };
 
 EqSettings getEqSettings(juce::AudioProcessorValueTreeState& parameters);
