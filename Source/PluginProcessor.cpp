@@ -99,14 +99,6 @@ void MyEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = 1;
     spec.sampleRate = sampleRate;
-    
-    leftChain.prepare(spec);
-    rightChain.prepare(spec);
-
-    auto chainSettings = getChainSettings(params);
-    updatePeakFilter(chainSettings);
-    updateHighCutFilter(chainSettings);
-    updateLowCutFilter(chainSettings);
 } 
 
 void MyEQAudioProcessor::releaseResources()
@@ -156,20 +148,11 @@ void MyEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    auto chainSettings = getChainSettings(params);
-    updatePeakFilter(chainSettings);
-    updateHighCutFilter(chainSettings);
-    updateLowCutFilter(chainSettings);
-
+    
     juce::dsp::AudioBlock<float> block(buffer);
-    auto leftBlock = block.getSingleChannelBlock(0);
-    auto rightBlock = block.getSingleChannelBlock(1);
-
-    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-
-    leftChain.process(leftContext);
-    rightChain.process(rightContext);
+   
+    juce::dsp::ProcessContextReplacing<float> leftContext();
+    juce::dsp::ProcessContextReplacing<float> rightContext();
 }
 
 //==============================================================================
@@ -198,72 +181,10 @@ void MyEQAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
     // whose contents will have been created by the getStateInformation() call.
 }
 
-ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& params)
-{
-    ChainSettings settings;
-
-    settings.lowCutFreq = params.getRawParameterValue("LowCut Freq")->load();
-    settings.highCutFreq = params.getRawParameterValue("HighCut Freq")->load();
-    settings.peakFreq = params.getRawParameterValue("Peak Freq")->load();
-    settings.peakGainInDecibels = params.getRawParameterValue("Peak Gain")->load();
-    settings.peakQuality = params.getRawParameterValue("Peak Quality")->load();
-    settings.lowCutSlope = static_cast<Slope>(params.getRawParameterValue("LowCut Slope")->load());
-    settings.highCutSlope = static_cast<Slope>(params.getRawParameterValue("HighCut Slope")->load());
-
-    return settings;
-}
-
-void MyEQAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings)
-{
-    auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-        getSampleRate(),
-        chainSettings.peakFreq,
-        chainSettings.peakQuality,
-        juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
-
-    updateCoeffs(leftChain.get<ChainPositions::Peak>().coefficients, peakCoeffs);
-    updateCoeffs(rightChain.get<ChainPositions::Peak>().coefficients, peakCoeffs);
-}
-
-void MyEQAudioProcessor::updateCoeffs(Coefficients& old, const Coefficients& replacement)
-{
-    *old = *replacement;
-}
-
 juce::AudioProcessorValueTreeState::ParameterLayout MyEQAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    //Frequencies
-    layout.add(std::make_unique<juce::AudioParameterFloat>("LowCut Freq","LowCut Freq",
-        juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
-        20.f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("HighCut Freq","HighCut Freq",
-        juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
-        20000.f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Freq","Peak Freq",
-        juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
-        750.f));
-    //Other Coeffs
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain","Peak Gain",
-        juce::NormalisableRange<float>(-24.f,24.f,0.5f,1.f),
-        0.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Quality", "Peak Quality",
-        juce::NormalisableRange<float>(0.1, 10.f, 0.05f, 1.f),
-        0.0f));
-
-    //Cut Slope
-    juce::StringArray stringArray;
-    for (int i = 0; i < 4; ++i) {
-        juce::String str;
-        str << (12 + i * 12);
-        str << "db/Oct";
-        stringArray.add(str);
-    }
-    layout.add(std::make_unique<juce::AudioParameterChoice>("LowCut Slope", 
-        "LowCut Slope", stringArray, 0));
-    layout.add(std::make_unique<juce::AudioParameterChoice>("HighCut Slope", 
-        "HighCut Slope", stringArray, 0));
     return layout;
 }
 //==============================================================================
