@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    This file contains the basic framework code for a JUCE plugin editor.
+	This file contains the basic framework code for a JUCE plugin editor.
 
   ==============================================================================
 */
@@ -11,23 +11,47 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
+struct CustomSlider : juce::Slider
+{
+	CustomSlider() : juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+								  juce::Slider::TextEntryBoxPosition::NoTextBox)
+	{
+	}
+};
 //==============================================================================
 /**
 */
-class MyEQAudioProcessorEditor  : public juce::AudioProcessorEditor
+class MyEQAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
-    MyEQAudioProcessorEditor (MyEQAudioProcessor&);
-    ~MyEQAudioProcessorEditor() override;
+	MyEQAudioProcessorEditor(MyEQAudioProcessor&);
+	~MyEQAudioProcessorEditor() override;
 
-    //==============================================================================
-    void paint (juce::Graphics&) override;
-    void resized() override;
+	//==============================================================================
+	void paint(juce::Graphics&) override;
+	void resized() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    MyEQAudioProcessor& audioProcessor;
+	// This reference is provided as a quick way for your editor to
+	// access the processor object that created it.
+	MyEQAudioProcessor& audioProcessor;
+	CustomSlider lowCutFreqSlider,
+		highCutFreqSlider,
+		peakFreqSlider,
+		peakGainSlider,
+		peakQSlider,
+		lowCutSlopeSlider,
+		highCutSlopeSlider;
+	using Parameters = juce::AudioProcessorValueTreeState;
+	using Attatchment = Parameters::SliderAttachment;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MyEQAudioProcessorEditor)
+	Attatchment lowCutFreqSliderAttatchment,
+		highCutFreqSliderAttatchment,
+		peakFreqSliderAttatchment,
+		peakGainSliderAttatchment,
+		peakQSliderAttatchment,
+		lowCutSlopeSliderAttatchment,
+		highCutSlopeSliderAttatchment;
+
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MyEQAudioProcessorEditor)
 };
