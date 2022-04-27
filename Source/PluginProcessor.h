@@ -39,9 +39,6 @@ void updateCoeffs(Oldcoeff& oldcoeff, Newcoeff& newcoeff)
 }
 using Coefficients = Filter::CoefficientsPtr;
 Coefficients makePeakFilter(const EqSettings& eqSettings, double samplerate);
-
-inline auto makeLowCutFilter(const EqSettings& eqSettings, double samplerate);
-inline auto makeHighCutFilter(const EqSettings& eqSettings, double samplerate);
 template<typename EqType, typename CoeffType>
 void updateCutFilters(EqType& cutFilter,
 					  CoeffType& cutCoeffs,
@@ -69,7 +66,20 @@ void updateCutFilters(EqType& cutFilter,
 }
 
 EqSettings getEqSettings(juce::AudioProcessorValueTreeState& parameters);
-
+inline auto makeLowCutFilter(const EqSettings& eqSettings, double samplerate)
+{
+	return juce::dsp::FilterDesign<float>::
+		designIIRHighpassHighOrderButterworthMethod(eqSettings.lowCutFreq,
+													samplerate,
+													2 * (eqSettings.lowCutSlope + 1));
+}
+inline auto makeHighCutFilter(const EqSettings& eqSettings, double samplerate)
+{
+	return juce::dsp::FilterDesign<float>::
+		designIIRLowpassHighOrderButterworthMethod(eqSettings.highCutFreq,
+												   samplerate,
+												   2 * (eqSettings.highCutSlope + 1));
+}
 //==============================================================================
 /**
 */

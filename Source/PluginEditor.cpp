@@ -133,8 +133,14 @@ void MyEQAudioProcessorEditor::timerCallback()
 	if (paramsChanged.compareAndSetBool(false, true))
 	{
 		auto eqSettings = getEqSettings(audioProcessor.parameters);
+		//graphic representation for peak
 		auto peakCoeffs = makePeakFilter(eqSettings, audioProcessor.getSampleRate());
 		updateCoeffs(monoChain.get<eqTypes::Peak>().coefficients, peakCoeffs);
+		//graphic representation for lowcut
+		auto lowCutCoeffs = makeLowCutFilter(eqSettings, audioProcessor.getSampleRate());
+		auto highCutCoeffs = makeHighCutFilter(eqSettings, audioProcessor.getSampleRate());
+		updateCutFilters(monoChain.get<eqTypes::LowCut>(), lowCutCoeffs, eqSettings.lowCutSlope);
+		updateCutFilters(monoChain.get<eqTypes::HighCut>(), highCutCoeffs, eqSettings.highCutSlope);
 		repaint();
 	}
 }
