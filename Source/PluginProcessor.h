@@ -88,13 +88,13 @@ private:
 	template<typename EqType, typename CoeffType>
 	void updateCutFilters(EqType& cutFilter,
 						  CoeffType& cutCoeffs,
-						  EqSettings& eqSettings)
+						  Slope& slope)
 	{
 		cutFilter.template setBypassed<0>(true);
 		cutFilter.template setBypassed<1>(true);
 		cutFilter.template setBypassed<2>(true);
 		cutFilter.template setBypassed<3>(true);
-		switch (eqSettings.lowCutSlope)
+		switch (slope)
 		{
 		case Slope_48:
 			*cutFilter.template get<3>().coefficients = *cutCoeffs[3];

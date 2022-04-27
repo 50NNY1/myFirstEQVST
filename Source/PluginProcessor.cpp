@@ -104,10 +104,11 @@ void MyEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 	auto eqSettings = getEqSettings(parameters);
 
 	//prepare peak filter
-	auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate,
-																		  eqSettings.peakFreq,
-																		  eqSettings.peakQ,
-																		  juce::Decibels::decibelsToGain(eqSettings.peakGain));
+	auto peakCoeffs = juce::dsp::IIR::Coefficients<float>::
+		makePeakFilter(sampleRate,
+					   eqSettings.peakFreq,
+					   eqSettings.peakQ,
+					   juce::Decibels::decibelsToGain(eqSettings.peakGain));
 
 	*leftChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
 	*rightChain.get<eqTypes::Peak>().coefficients = *peakCoeffs;
@@ -121,48 +122,21 @@ void MyEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
 	auto& leftLowCut = leftChain.get<eqTypes::LowCut>();
 	auto& rightLowCut = rightChain.get<eqTypes::LowCut>();
-	updateCutFilters(leftLowCut, lowCutCoeffs, eqSettings);
-	updateCutFilters(rightLowCut, lowCutCoeffs, eqSettings);
-	/* leftLowCut.setBypassed<0>(true);
-	 leftLowCut.setBypassed<1>(true);
-	 leftLowCut.setBypassed<2>(true);
-	 leftLowCut.setBypassed<3>(true);
-	 auto& rightLowCut = rightChain.get<eqTypes::LowCut>();
-	 rightLowCut.setBypassed<0>(true);
-	 rightLowCut.setBypassed<1>(true);
-	 rightLowCut.setBypassed<2>(true);
-	 rightLowCut.setBypassed<3>(true);
-	 switch (eqSettings.lowCutSlope)
-	 {
-	 case Slope_48:
-		 *leftLowCut.get<3>().coefficients = *lowCutCoeffs[3];
-		 leftLowCut.setBypassed<3>(false);
-		 *rightLowCut.get<3>().coefficients = *lowCutCoeffs[3];
-		 rightLowCut.setBypassed<3>(false);
-	 case Slope_36:
-		 *leftLowCut.get<2>().coefficients = *lowCutCoeffs[2];
-		 leftLowCut.setBypassed<2>(false);
-		 *rightLowCut.get<2>().coefficients = *lowCutCoeffs[2];
-		 rightLowCut.setBypassed<2>(false);
-	 case Slope_24:
-		 *leftLowCut.get<1>().coefficients = *lowCutCoeffs[1];
-		 leftLowCut.setBypassed<1>(false);
-		 *rightLowCut.get<1>().coefficients = *lowCutCoeffs[1];
-		 rightLowCut.setBypassed<1>(false);
-	 case Slope_12:
-		 *leftLowCut.get<0>().coefficients = *lowCutCoeffs[0];
-		 leftLowCut.setBypassed<0>(false);
-		 *rightLowCut.get<0>().coefficients = *lowCutCoeffs[0];
-		 rightLowCut.setBypassed<0>(false);
-	 }*/
+	updateCutFilters(leftLowCut, lowCutCoeffs, eqSettings.lowCutSlope);
+	updateCutFilters(rightLowCut, lowCutCoeffs, eqSettings.lowCutSlope);
 
-	 //prepare highcut filter
+	//prepare highcut filter
 	auto highCutCoefficients =
-		juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(eqSettings.highCutFreq,
-																				   sampleRate,
-																				   2 * (eqSettings.highCutSlope + 1));
-
+		juce::dsp::FilterDesign<float>::
+		designIIRLowpassHighOrderButterworthMethod(eqSettings.highCutFreq,
+												   getSampleRate(),
+												   2 * (eqSettings.highCutSlope + 1));
 	auto& leftHighCut = leftChain.get<eqTypes::HighCut>();
+	auto& rightHighCut = rightChain.get<eqTypes::HighCut>();
+	updateCutFilters(leftHighCut, highCutCoefficients, eqSettings.highCutSlope);
+	updateCutFilters(rightHighCut, highCutCoefficients, eqSettings.highCutSlope);
+
+	/*auto& leftHighCut = leftChain.get<eqTypes::HighCut>();
 	leftHighCut.setBypassed<0>(true);
 	leftHighCut.setBypassed<1>(true);
 	leftHighCut.setBypassed<2>(true);
@@ -194,7 +168,7 @@ void MyEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 		leftHighCut.setBypassed<0>(false);
 		*rightHighCut.get<0>().coefficients = *highCutCoefficients[0];
 		rightHighCut.setBypassed<0>(false);
-	}
+	}*/
 }
 
 void MyEQAudioProcessor::releaseResources()
@@ -257,49 +231,19 @@ void MyEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
 
 	auto& leftLowCut = leftChain.get<eqTypes::LowCut>();
 	auto& rightLowCut = rightChain.get<eqTypes::LowCut>();
-	updateCutFilters(leftLowCut, lowCutCoeffs, eqSettings);
-	updateCutFilters(rightLowCut, lowCutCoeffs, eqSettings);
+	updateCutFilters(leftLowCut, lowCutCoeffs, eqSettings.lowCutSlope);
+	updateCutFilters(rightLowCut, lowCutCoeffs, eqSettings.lowCutSlope);
 
-	//process highcutfilter
 	//prepare highcut filter
 	auto highCutCoefficients =
-		juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(eqSettings.highCutFreq,
-																				   getSampleRate(),
-																				   2 * (eqSettings.highCutSlope + 1));
-
+		juce::dsp::FilterDesign<float>::
+		designIIRLowpassHighOrderButterworthMethod(eqSettings.highCutFreq,
+												   getSampleRate(),
+												   2 * (eqSettings.highCutSlope + 1));
 	auto& leftHighCut = leftChain.get<eqTypes::HighCut>();
-	leftHighCut.setBypassed<0>(true);
-	leftHighCut.setBypassed<1>(true);
-	leftHighCut.setBypassed<2>(true);
-	leftHighCut.setBypassed<3>(true);
 	auto& rightHighCut = rightChain.get<eqTypes::HighCut>();
-	rightHighCut.setBypassed<0>(true);
-	rightHighCut.setBypassed<1>(true);
-	rightHighCut.setBypassed<2>(true);
-	rightHighCut.setBypassed<3>(true);
-	switch (eqSettings.highCutSlope)
-	{
-	case Slope_48:
-		*leftHighCut.get<3>().coefficients = *highCutCoefficients[3];
-		leftHighCut.setBypassed<3>(false);
-		*rightHighCut.get<3>().coefficients = *highCutCoefficients[3];
-		rightHighCut.setBypassed<3>(false);
-	case Slope_36:
-		*leftHighCut.get<2>().coefficients = *highCutCoefficients[2];
-		leftHighCut.setBypassed<2>(false);
-		*rightHighCut.get<2>().coefficients = *highCutCoefficients[2];
-		rightHighCut.setBypassed<2>(false);
-	case Slope_24:
-		*leftHighCut.get<1>().coefficients = *highCutCoefficients[1];
-		leftHighCut.setBypassed<1>(false);
-		*rightHighCut.get<1>().coefficients = *highCutCoefficients[1];
-		rightHighCut.setBypassed<1>(false);
-	case Slope_12:
-		*leftHighCut.get<0>().coefficients = *highCutCoefficients[0];
-		leftHighCut.setBypassed<0>(false);
-		*rightHighCut.get<0>().coefficients = *highCutCoefficients[0];
-		rightHighCut.setBypassed<0>(false);
-	}
+	updateCutFilters(leftHighCut, highCutCoefficients, eqSettings.highCutSlope);
+	updateCutFilters(rightHighCut, highCutCoefficients, eqSettings.highCutSlope);
 
 	juce::dsp::AudioBlock<float> block(buffer);
 
