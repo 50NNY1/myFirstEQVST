@@ -109,12 +109,14 @@ MyEQAudioProcessorEditor::MyEQAudioProcessorEditor(MyEQAudioProcessor& p)
 {
 	addAndMakeVisible(responseCurve);
 	addAndMakeVisible(peakFreqSlider);
+	peakFreqSlider.setLookAndFeel(&guiStyleSheet);
 	addAndMakeVisible(peakGainSlider);
 	addAndMakeVisible(peakQSlider);
 	addAndMakeVisible(lowCutFreqSlider);
 	addAndMakeVisible(highCutFreqSlider);
 	addAndMakeVisible(lowCutSlopeSlider);
 	addAndMakeVisible(highCutSlopeSlider);
+
 	setSize(800, 600);
 }
 
