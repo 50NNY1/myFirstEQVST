@@ -13,22 +13,21 @@
 
 struct GuiStyleSheet
 {
-	juce::Colour l1 = juce::Colours::fuchsia;
-	juce::Colour l2 = juce::Colours::fuchsia;
-	juce::Colour p1 = juce::Colours::fuchsia;
-	juce::Colour p2 = juce::Colours::fuchsia;
-	juce::Colour h1 = juce::Colours::fuchsia;
-	juce::Colour h2 = juce::Colours::fuchsia;
+	const juce::Colour l1 = juce::Colours::blue;
+	const juce::Colour l2 = juce::Colours::white;
+	const juce::Colour p1 = juce::Colours::purple;
+	const juce::Colour p2 = juce::Colours::white;
+	const juce::Colour h1 = juce::Colours::yellow;
+	const juce::Colour h2 = juce::Colours::white;
 };
 class CustomDial : public juce::LookAndFeel_V4
 {
 public:
 	CustomDial(juce::Colour _colour1, juce::Colour _colour2)
 	{
-		/*_colour1 = colour1;
-		_colour2 = colour2;*/
-		colour1 = juce::Colours::white;
-		colour2 = juce::Colours::purple;
+		colour1 = _colour1;
+		colour2 = _colour2;
+
 	}
 	void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
 						  float sliderPosProportional, float rotaryStartAngle,
