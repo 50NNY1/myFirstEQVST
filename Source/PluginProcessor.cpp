@@ -245,21 +245,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout MyEQAudioProcessor::createPa
 
 	return layout;
 }
-//inline auto MyEQAudioProcessor::makeLowCutFilter(const EqSettings& eqSettings, double samplerate)
-//{
-//	return juce::dsp::FilterDesign<float>::
-//		designIIRHighpassHighOrderButterworthMethod(eqSettings.lowCutFreq,
-//													samplerate,
-//													2 * (eqSettings.lowCutSlope + 1));
-//}
-//
-//inline auto MyEQAudioProcessor::makeHighCutFilter(const EqSettings& eqSettings, double samplerate)
-//{
-//	return juce::dsp::FilterDesign<float>::
-//		designIIRLowpassHighOrderButterworthMethod(eqSettings.highCutFreq,
-//												   samplerate,
-//												   2 * (eqSettings.highCutSlope + 1));
-//}
 void MyEQAudioProcessor::updatePeakFilter(EqSettings& settings)
 {
 	auto peakCoeffs = makePeakFilter(settings, getSampleRate());

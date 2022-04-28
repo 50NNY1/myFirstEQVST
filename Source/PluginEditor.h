@@ -18,12 +18,28 @@ struct CustomSlider : juce::Slider
 	{
 	}
 };
+
+struct ResponseCurveDraw : juce::Component,
+	juce::AudioProcessorParameter::Listener,
+	juce::Timer
+{
+	ResponseCurveDraw(MyEQAudioProcessor&);
+	~ResponseCurveDraw();
+	//==============================================================================
+	void paint(juce::Graphics& g);
+	//==============================================================================
+	void timerCallback() override;
+	void parameterValueChanged(int parameterIndex, float newValue) override;
+	void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {};
+private:
+	MyEQAudioProcessor& audioProcessor;
+	juce::Atomic<bool> paramsChanged{ false };
+	MonoChain monoChain;
+};
 //==============================================================================
 /**
 */
-class MyEQAudioProcessorEditor : public juce::AudioProcessorEditor,
-	juce::Timer,
-	juce::AudioProcessorParameter::Listener
+class MyEQAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
 	MyEQAudioProcessorEditor(MyEQAudioProcessor&);
@@ -31,15 +47,10 @@ public:
 	//==============================================================================
 	void paint(juce::Graphics&) override;
 	void resized() override;
-	//==============================================================================
-	void timerCallback() override;
-	void parameterValueChanged(int parameterIndex, float newValue) override;
-	void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {};
 private:
 	// This reference is provided as a quick way for your editor to
 	// access the processor object that created it.
 	MyEQAudioProcessor& audioProcessor;
-	juce::Atomic<bool> paramsChanged{ false };
 	CustomSlider lowCutFreqSlider,
 		highCutFreqSlider,
 		peakFreqSlider,
@@ -57,6 +68,7 @@ private:
 		peakQSliderAttatchment,
 		lowCutSlopeSliderAttatchment,
 		highCutSlopeSliderAttatchment;
+	ResponseCurveDraw responseCurve;
 
 	MonoChain monoChain;
 
