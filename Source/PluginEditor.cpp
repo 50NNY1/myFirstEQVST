@@ -90,6 +90,7 @@ void ResponseCurveDraw::paint(juce::Graphics& g)
 	for (size_t i = 1; i < mags.size(); ++i)
 		responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
 
+
 	g.setColour(juce::Colours::orange);
 	g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
 	g.setColour(juce::Colours::white);
@@ -109,13 +110,20 @@ MyEQAudioProcessorEditor::MyEQAudioProcessorEditor(MyEQAudioProcessor& p)
 {
 	addAndMakeVisible(responseCurve);
 	addAndMakeVisible(peakFreqSlider);
-	peakFreqSlider.setLookAndFeel(&guiStyleSheet);
+	peakFreqSlider.setLookAndFeel(&peakDials);
 	addAndMakeVisible(peakGainSlider);
+	peakGainSlider.setLookAndFeel(&peakDials);
 	addAndMakeVisible(peakQSlider);
+	peakQSlider.setLookAndFeel(&peakDials);
 	addAndMakeVisible(lowCutFreqSlider);
+	lowCutFreqSlider.setLookAndFeel(&lowDials);
 	addAndMakeVisible(highCutFreqSlider);
+	highCutFreqSlider.setLookAndFeel(&highDials);
 	addAndMakeVisible(lowCutSlopeSlider);
+	lowCutSlopeSlider.setLookAndFeel(&lowDials);
 	addAndMakeVisible(highCutSlopeSlider);
+	highCutSlopeSlider.setLookAndFeel(&highDials);
+
 
 	setSize(800, 600);
 }
