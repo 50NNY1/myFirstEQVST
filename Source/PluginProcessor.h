@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+//here is a simple enum to store the different options for our cut filters
 enum Slope
 {
 	Slope_12,
@@ -16,15 +17,22 @@ enum Slope
 	Slope_36,
 	Slope_48
 };
+/*here is a struct to store the eqsettings, we use a struct not a class as we dont need to
+make use of private members here, the slope and the eqsettings struct are defined at the top of
+our header file as alot of the proceeding code makes use of these declarations elsewhere in our code*/
 struct EqSettings
 {
 	float lowCutFreq{ 0 }, highCutFreq{ 0 }, peakFreq{ 0 };
 	float peakGain{ 0 }, peakQ{ 1.f };
 	Slope lowCutSlope{ Slope::Slope_12 }, highCutSlope{ Slope::Slope_12 };
 };
+/*to make our code more brief we run using Filter etc... to save us writing all the code to gain
+access of the juce::dsp::IIR::Filter class, we did this also for cutfilter and monochain*/
 using Filter = juce::dsp::IIR::Filter<float>;
 using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
 using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+
+/*similar to how we did the slope enum we do the same for eqTypes.*/
 enum eqTypes
 {
 	LowCut,
@@ -32,6 +40,9 @@ enum eqTypes
 	HighCut
 };
 
+/*we use the template keyword here so we can pass data types as a parameter
+to make our code more modular, so when expanded, we can use the same function
+for different uses*/
 template<typename Oldcoeff, typename Newcoeff>
 void updateCoeffs(Oldcoeff& oldcoeff, Newcoeff& newcoeff)
 {
@@ -39,6 +50,9 @@ void updateCoeffs(Oldcoeff& oldcoeff, Newcoeff& newcoeff)
 }
 using Coefficients = Filter::CoefficientsPtr;
 Coefficients makePeakFilter(const EqSettings& eqSettings, double samplerate);
+/*again using the template, as we use the same function for lowcut and highcut functions,
+our cut filters are comprised of 4 IIR filters, this allows us to use varying degrees of
+a slope*/
 template<typename EqType, typename CoeffType>
 void updateCutFilters(EqType& cutFilter,
 					  CoeffType& cutCoeffs,

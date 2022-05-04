@@ -11,6 +11,7 @@
 
 ResponseCurveDraw::ResponseCurveDraw(MyEQAudioProcessor& p) : audioProcessor(p)
 {
+	//range based for loop to add listeners to all dials
 	const auto& params = audioProcessor.getParameters();
 	for (auto param : params)
 		param->addListener(this);
@@ -19,17 +20,20 @@ ResponseCurveDraw::ResponseCurveDraw(MyEQAudioProcessor& p) : audioProcessor(p)
 
 ResponseCurveDraw::~ResponseCurveDraw()
 {
+	//range based for loop to destruct listeners
 	const auto& params = audioProcessor.getParameters();
 	for (auto param : params)
 		param->removeListener(this);
 }
 void ResponseCurveDraw::parameterValueChanged(int parameterIndex, float newValue)
 {
+	//listener!
 	paramsChanged.set(true);
 }
 
 void ResponseCurveDraw::timerCallback()
 {
+	//test switch for true and then set to false
 	if (paramsChanged.compareAndSetBool(false, true))
 	{
 		auto eqSettings = getEqSettings(audioProcessor.parameters);
@@ -46,6 +50,7 @@ void ResponseCurveDraw::timerCallback()
 }
 void ResponseCurveDraw::paint(juce::Graphics& g)
 {
+	//bring everything necessary into scope or into variables into scope
 	auto responseArea = getLocalBounds();
 	auto responseWidth = responseArea.getWidth();
 	auto& lowCut = monoChain.get < eqTypes::LowCut>();
@@ -55,7 +60,8 @@ void ResponseCurveDraw::paint(juce::Graphics& g)
 
 	std::vector<double> mags;
 	mags.resize(responseWidth);
-
+	/*get magnitudes of our filter coefficients, we use the maptolog10 so the response
+	curve is drawn proportional to how frequency is percieved by us.*/
 	for (int i = 0; i < mags.size(); ++i)
 	{
 		double mag = 1.f;
@@ -81,10 +87,14 @@ void ResponseCurveDraw::paint(juce::Graphics& g)
 		mags[i] = juce::Decibels::gainToDecibels(mag);
 	}
 
+	/*here we use the juce::Path class to draw our response curve, this class allows us to plot
+	points for to draw a line, here we use all the individual magnitudes and draw a line for the
+	response curve to be represented by*/
 	juce::Path responseCurve;
 	const double outMin = responseArea.getBottom();
 	const double outMax = responseArea.getY();
-	auto map = [outMin, outMax](double input) {return juce::jmap(input, -24.0, 24.0, outMin, outMax); };
+	auto map = [outMin, outMax](double input) {return juce::jmap(input, -24.0, 24.0,
+																 outMin, outMax); };
 	responseCurve.startNewSubPath(responseArea.getX(), map(mags.front()));
 
 	for (size_t i = 1; i < mags.size(); ++i)
@@ -108,6 +118,7 @@ MyEQAudioProcessorEditor::MyEQAudioProcessorEditor(MyEQAudioProcessor& p)
 	highCutSlopeSliderAttatchment(audioProcessor.parameters, "HighCut Slope", highCutSlopeSlider),
 	highCutFreqSliderAttatchment(audioProcessor.parameters, "HighCut Freq", highCutFreqSlider)
 {
+	//push gui members to graphics rendering thread
 	addAndMakeVisible(responseCurve);
 	addAndMakeVisible(peakFreqSlider);
 	peakFreqSlider.setLookAndFeel(&peakDials);
@@ -135,14 +146,13 @@ MyEQAudioProcessorEditor::~MyEQAudioProcessorEditor()
 //==============================================================================
 void MyEQAudioProcessorEditor::paint(juce::Graphics& g)
 {
-	// (Our component is opaque, so we must completely fill the background with a solid colour)
 	g.fillAll(juce::Colours::black);
 }
 
 void MyEQAudioProcessorEditor::resized()
 {
-	// This is generally where you'll want to lay out the positions of any
-	// subcomponents in your editor..
+
+	//get bounds to divide into subsections for each gui component
 	auto bounds = getLocalBounds();
 	auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
 	responseCurve.setBounds(responseArea);

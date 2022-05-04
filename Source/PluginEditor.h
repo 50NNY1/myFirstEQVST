@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
+//here i've used a struct for a style sheet, the colours declared a just temporary place holders.
 struct GuiStyleSheet
 {
 	const juce::Colour l1 = juce::Colours::blue;
@@ -20,6 +21,11 @@ struct GuiStyleSheet
 	const juce::Colour h1 = juce::Colours::yellow;
 	const juce::Colour h2 = juce::Colours::white;
 };
+
+/*here i created a class to replace the standard juce::Slider classes, as I want to customise them
+in their construction. we used a class as we need colour1 and colour2 to be private members,
+so there can be multiple instances holding different datum. here we also use some simple maths to
+create the dial with lines to show where the dial has been turned.*/
 class CustomDial : public juce::LookAndFeel_V4
 {
 public:

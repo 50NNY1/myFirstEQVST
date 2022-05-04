@@ -67,8 +67,8 @@ double MyEQAudioProcessor::getTailLengthSeconds() const
 
 int MyEQAudioProcessor::getNumPrograms()
 {
-	return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-				// so this should be at least 1, even if you're not really implementing programs.
+	return 1;
+
 }
 
 int MyEQAudioProcessor::getCurrentProgram()
@@ -111,8 +111,6 @@ void MyEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
 void MyEQAudioProcessor::releaseResources()
 {
-	// When playback stops, you can use this as an opportunity to free up any
-	// spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -122,15 +120,10 @@ bool MyEQAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) cons
 	juce::ignoreUnused(layouts);
 	return true;
 #else
-	// This is the place where you check if the layout is supported.
-	// In this template code we only support mono or stereo.
-	// Some plugin hosts, such as certain GarageBand versions, will only
-	// load plugins that support stereo bus layouts.
 	if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
 		&& layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
 		return false;
 
-	// This checks if the input layout matches the output layout
 #if ! JucePlugin_IsSynth
 	if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
 		return false;
@@ -143,22 +136,25 @@ bool MyEQAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) cons
 
 void MyEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+	//bring audio stream into scope
 	juce::ScopedNoDenormals noDenormals;
 	auto totalNumInputChannels = getTotalNumInputChannels();
 	auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+	//clear buffer at beginning of processing the next upcoming block
 	for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
 		buffer.clear(i, 0, buffer.getNumSamples());
 
+	//bring users eq settings into scope
 	auto eqSettings = getEqSettings(parameters);
 
-	//process peak filter
+	//process filters
 	updatePeakFilter(eqSettings);
 	updateLowCutFilter(eqSettings);
 	updateHighCutFilter(eqSettings);
 
+	//output now produced audio block
 	juce::dsp::AudioBlock<float> block(buffer);
-
 	auto leftBlock = block.getSingleChannelBlock(0);
 	auto rightBlock = block.getSingleChannelBlock(1);
 	juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
@@ -176,15 +172,13 @@ bool MyEQAudioProcessor::hasEditor() const
 juce::AudioProcessorEditor* MyEQAudioProcessor::createEditor()
 {
 	return new MyEQAudioProcessorEditor(*this);
-	/*return new juce::GenericAudioProcessorEditor(*this);*/
 }
 
 //==============================================================================
 void MyEQAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-	// You should use this method to store your parameters in the memory block.
-	// You could do that either as raw data, or use the XML or ValueTree classes
-	// as intermediaries to make it easy to save and load complex data.
+	/*this code allows us to recall the users data on closeand open, this code
+	saves it */
 	juce::MemoryOutputStream mos(destData, true);
 	parameters.state.writeToStream(mos);
 
@@ -192,8 +186,7 @@ void MyEQAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 
 void MyEQAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-	// You should use this method to restore your parameters from this memory block,
-	// whose contents will have been created by the getStateInformation() call.
+	//this code recalls the data saved above ^^^
 	auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
 	if (tree.isValid())
 	{
@@ -203,8 +196,10 @@ void MyEQAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 
 juce::AudioProcessorValueTreeState::ParameterLayout MyEQAudioProcessor::createParameterLayout()
 {
+	/*to create an 'object' of sorts to store our parameters here we use juce's
+	audio processor value tree state class, here we declare the parameters, their names
+	ranges etc...*/
 	juce::AudioProcessorValueTreeState::ParameterLayout layout;
-
 	layout.add(std::make_unique<juce::AudioParameterFloat>("LowCut Freq",
 														   "LowCut Freq",
 														   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
@@ -225,7 +220,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout MyEQAudioProcessor::createPa
 														   "Peak Q",
 														   juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f),
 														   1.f));
-
+	/*here we are still just adding more parameters for the user, juce through a for loop.
+	here we are creating the cutoff slope parameters*/
 	juce::StringArray stringArray;
 	for (int i = 0; i < 4; ++i)
 	{
@@ -247,6 +243,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout MyEQAudioProcessor::createPa
 }
 void MyEQAudioProcessor::updatePeakFilter(EqSettings& settings)
 {
+	/*for the next 3 functions i have written, when in preparetoplay() and processblock()
+	and the update filter functions are called, we call another function, declared in our header
+	file, coefficients for the IIR filters are generated, and then updated per the user's settings */
 	auto peakCoeffs = makePeakFilter(settings, getSampleRate());
 	updateCoeffs(*leftChain.get<eqTypes::Peak>().coefficients, *peakCoeffs);
 	updateCoeffs(*rightChain.get<eqTypes::Peak>().coefficients, *peakCoeffs);
@@ -276,6 +275,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 Coefficients makePeakFilter(const EqSettings& eqSettings, double sampleRate)
 {
+	/*here we generate the coefficients for the peak filter*/
 	return juce::dsp::IIR::Coefficients<float>::makePeakFilter(
 		sampleRate,
 		eqSettings.peakFreq,
@@ -285,6 +285,7 @@ Coefficients makePeakFilter(const EqSettings& eqSettings, double sampleRate)
 
 EqSettings getEqSettings(juce::AudioProcessorValueTreeState& parameters)
 {
+	/*allows us to bring eq settings into scope elsewhere in the code*/
 	EqSettings eqSettings;
 	eqSettings.lowCutFreq = parameters.getRawParameterValue("LowCut Freq")->load();
 	eqSettings.highCutFreq = parameters.getRawParameterValue("HighCut Freq")->load();
